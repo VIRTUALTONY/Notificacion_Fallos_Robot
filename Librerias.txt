@@ -1,0 +1,16 @@
+LIBRERIAS IDLE PYTHON 3.14
+
+py -m pip install requests
+py -m pip install plyer
+py -m pip install matplotlib
+py -m pip install tkintermapview
+py -m pip install pillow
+
+
+LIBRERIAS VISUAL STUDIO CODE
+
+python -m pip install requests
+python -m pip install plyer
+python -m pip install matplotlib
+python -m pip install tkintermapview
+python -m pip install pillow

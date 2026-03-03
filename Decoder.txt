@@ -1,0 +1,68 @@
+function Decoder(bytes, port) {
+    // RS485-LB Decode (información de dispositivo)
+    if (port === 5) {
+        var freq_band;
+        var sub_band;
+        var sensor;
+
+        if (bytes[0] === 0x30) sensor = "RS485-LB";
+
+        var firm_ver = (bytes[1] & 0x0f) + '.' + (bytes[2] >> 4 & 0x0f) + '.' + (bytes[2] & 0x0f);
+
+        switch (bytes[3]) {
+            case 0x01: freq_band = "EU868"; break;
+            case 0x02: freq_band = "US915"; break;
+            case 0x03: freq_band = "IN865"; break;
+            case 0x04: freq_band = "AU915"; break;
+            case 0x05: freq_band = "KZ865"; break;
+            case 0x06: freq_band = "RU864"; break;
+            case 0x07: freq_band = "AS923"; break;
+            case 0x08: freq_band = "AS923_1"; break;
+            case 0x09: freq_band = "AS923_2"; break;
+            case 0x0A: freq_band = "AS923_3"; break;
+            case 0x0F: freq_band = "AS923_4"; break;
+            case 0x0B: freq_band = "CN470"; break;
+            case 0x0C: freq_band = "EU433"; break;
+            case 0x0D: freq_band = "KR920"; break;
+            case 0x0E: freq_band = "MA869"; break;
+        }
+
+        sub_band = (bytes[4] === 0xFF) ? "NULL" : bytes[4];
+
+        var bat = (bytes[5] << 8 | bytes[6]) / 1000;
+
+        return {
+            SENSOR_MODEL: sensor,
+            FIRMWARE_VERSION: firm_ver,
+            FREQUENCY_BAND: freq_band,
+            SUB_BAND: sub_band,
+            BAT: bat,
+        };
+    } else {
+        var decode = {};
+        decode.EXTI_Trigger = (bytes[0] & 0x80) ? "TRUE" : "FALSE";
+        decode.BatV = ((bytes[0] << 8 | bytes[1]) & 0x7FFF) / 1000;
+        decode.Payver = bytes[2];
+
+        // Función helper: convierte slice ASCII a float seguro
+        function parseFloatSafe(slice) {
+            var str = String.fromCharCode.apply(null, slice)
+                        .replace(/\0/g, '')   // elimina nulls
+                        .replace(/^0+/, '');  // elimina ceros a la izquierda
+
+            if (str === '' || isNaN(str)) return 0.0;
+            return parseFloat(str);
+        }
+
+        // Variables compartidas
+        decode.latitud       = parseFloatSafe(bytes.slice(4, 14));
+        decode.longitud      = parseFloatSafe(bytes.slice(14, 24));
+        decode.velocidad     = parseFloatSafe(bytes.slice(24, 34));
+        
+        // Variables Antony Chávez 
+        decode.balanceo      = parseFloatSafe(bytes.slice(34, 44)); // antes rollStr
+        decode.voltaje       = parseFloatSafe(bytes.slice(44, 54));
+
+        return decode;
+    }
+}
